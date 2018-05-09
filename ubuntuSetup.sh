@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 
 # Install node and git
+read -p "Your domain name in these format example.com: " domain
+read -p "Your IP address: " ip
+
 
 updateLinuxPackages() {
   printf '=================================== Updating all packages ============================================ \n'
-  sudo yum update -y
+  sudo apt-get update
 }
 
 setupNodeAndGit() {
   printf '=================================== Installing Node LTS ================================================ \n'
-  curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
-  export NVM_DIR="$HOME/.nvm"
-  source ~/.bashrc
-  nvm install --lts
-  printf '==================================== Installing Git ====================================================== \n'
-  sudo yum install git
+  curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
+   sudo bash nodesource_setup.sh
+   sudo apt-get install nodejs -y
   export NODE_ENV=production
 }
 
@@ -36,14 +36,7 @@ installDependencies() {
   printf '================================ Installing project dependencies ================================================= \n'
   cd More-recipes
   git checkout chore/deploy-to-amazon-web-services
-  npm install -g babel-preset-stage-2 
-  npm install -g babel-preset-es2015
-  npm install -g nodemon
-  npm install -g babel-cli
-  npm install -g babel-runtime
-  npm install -g babel-plugin-transform-regenerator
-  npm install -g sequelize-cli
-  npm install
+  sudo npm install --unsafe-perm
   npm run server:build
 }
 
@@ -67,21 +60,32 @@ setProjectEnv() {
 
 # check for nginx
 installNginx() {
-  sudo yum install nginx -y
+  sudo apt-get install nginx -y
+  sudo rm -rf /etc/nginx/sites-enabled/default
+  sudo bash -c 'cat > /etc/nginx/sites-available/moreRecipes <<EOF
+   server {
+           listen 80;
+           server_name '$domain' 'www.$domain';
+           location / {
+                   proxy_pass 'http://$ip:8000';
+           }
+   }'
+   sudo ln -s /etc/nginx/sites-available/moreRecipes /etc/nginx/sites-enabled/moreRecipes
+   sudo service nginx restart
 }
 
-# set reverse proxy
-reserveProxy() {
-  cd ../
-  printf '======================================= setting reverse proxy =================================================== \n'
-  sudo rm -rf /etc/nginx/nginx.conf
-  sudo cp ./noSSL.conf /etc/nginx/nginx.conf
-  sudo service nginx restart
+
+setupSSLCertificate() {
+  printf '====================================== Setting up SSL certificate ======================================= \n'
+  add-apt-repository ppa:certbot/certbot
+  sudo apt-get update
+  apt-get install python-certbot-nginx
+  sudo certbot --nginx -d $domain -d www.$domain
 }
 
 # create background process for node
 processManager() {
-  cd More-recipes
+  cd ../More-recipes
   sequelize db:migrate
   npm install -g pm2
   printf '==================================== starting node background process ================================================= \n'
@@ -95,7 +99,7 @@ run() {
   installDependencies
   setProjectEnv
   installNginx
-  reserveProxy
+  setupSSLCertificate
   processManager
 }
 
