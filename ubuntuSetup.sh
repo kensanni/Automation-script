@@ -2,8 +2,6 @@
 
 # Install node and git
 read -p "Your domain name in these format example.com: " domain
-read -p "Your IP address: " ip
-
 
 updateLinuxPackages() {
   printf '=================================== Updating all packages ============================================ \n'
@@ -13,8 +11,8 @@ updateLinuxPackages() {
 setupNodeAndGit() {
   printf '=================================== Installing Node LTS ================================================ \n'
   curl -sL https://deb.nodesource.com/setup_8.x -o nodesource_setup.sh
-   sudo bash nodesource_setup.sh
-   sudo apt-get install nodejs -y
+  sudo bash nodesource_setup.sh
+  sudo apt-get install nodejs -y
   export NODE_ENV=production
 }
 
@@ -37,6 +35,7 @@ installDependencies() {
   cd More-recipes
   git checkout chore/deploy-to-amazon-web-services
   sudo npm install --unsafe-perm
+  sudo npm install -g sequelize-cli
   npm run server:build
 }
 
@@ -55,6 +54,7 @@ setProjectEnv() {
   REQUEST=https://api.cloudinary.com/v1_1/sannikay/upload
   CLOUD_PRESET=if4gv9sy
   DATABASE_URL=postgres://super_user:awsdevops@ec2-54-186-217-214.us-west-2.compute.amazonaws.com:5432/morerecipe
+  EOF
   '
 }
 
@@ -62,12 +62,17 @@ setProjectEnv() {
 installNginx() {
   sudo apt-get install nginx -y
   sudo rm -rf /etc/nginx/sites-enabled/default
+  if [[ -d /etc/nginx/sites-enabled/moreRecipes  ]]; then
+      printf "=================================== Removing existing configuration for nginx ======================================"
+      sudo rm -rf /etc/nginx/sites-available/moreRecipes
+      sudo rm -rf /etc/nginx/sites-enabled/moreRecipes
+  fi
   sudo bash -c 'cat > /etc/nginx/sites-available/moreRecipes <<EOF
    server {
            listen 80;
-           server_name '$domain' 'www.$domain';
+           server_name '$domain' '$domain';
            location / {
-                   proxy_pass 'http://$ip:8000';
+                   proxy_pass 'http://127.0.0.1:8000';
            }
    }'
    sudo ln -s /etc/nginx/sites-available/moreRecipes /etc/nginx/sites-enabled/moreRecipes
@@ -79,8 +84,8 @@ setupSSLCertificate() {
   printf '====================================== Setting up SSL certificate ======================================= \n'
   add-apt-repository ppa:certbot/certbot
   sudo apt-get update
-  apt-get install python-certbot-nginx
-  sudo certbot --nginx -d $domain -d www.$domain
+  apt-get install python-certbot-nginx -y
+  sudo certbot --nginx -d $domain -d $domain
 }
 
 # create background process for node
