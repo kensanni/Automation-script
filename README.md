@@ -29,10 +29,5 @@ You can get the script running in the following way:
     ```
 2. To run the script, run
     ```
-    bash ubun.sh
+    bash ubuntuSetup.sh
     ```
-4. To generate `SSL certificate` for your domain with these script, run
-    ```
-    bash setup.sh
-    ```
-5.  Note that the port for the application is set to 8000
