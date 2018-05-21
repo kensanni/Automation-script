@@ -85,7 +85,7 @@ setupSSLCertificate() {
   add-apt-repository ppa:certbot/certbot
   sudo apt-get update
   apt-get install python-certbot-nginx -y
-  sudo certbot --nginx -d $domain -d $domain
+  sudo certbot --nginx -d $domain
 }
 
 # create background process for node
