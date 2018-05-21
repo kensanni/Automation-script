@@ -29,5 +29,5 @@ You can get the script running in the following way:
     ```
 2. To run the script, run
     ```
-    bash ubuntuSetup.sh
+    sudo bash ubuntuSetup.sh
     ```
