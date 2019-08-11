@@ -1,4 +1,4 @@
-# DevOps-AutomateBash
+# Automation-script
 
 ## About
 DevOps-AutomateBash is a script that helps deploy a project from github, install and setup all necessary requirement on `Ubuntu server`
